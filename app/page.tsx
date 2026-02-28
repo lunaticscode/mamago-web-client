@@ -1,5 +1,5 @@
-import MainRoute from "@/routes/MainRoute";
+import HomeRoute from "@/routes/HomeRoute";
 
 export default function Home() {
-  return <MainRoute />;
+  return <HomeRoute />;
 }

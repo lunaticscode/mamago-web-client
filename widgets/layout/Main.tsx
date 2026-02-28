@@ -5,6 +5,6 @@ interface MainProps {
 }
 
 const Main: FC<MainProps> = ({ children }) => {
-  return <main>{children}</main>;
+  return <main className="min-h-dvh">{children}</main>;
 };
 export default Main;

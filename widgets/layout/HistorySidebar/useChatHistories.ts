@@ -1,4 +1,4 @@
-import { ChatHistory } from "@/shared/types/chat-history";
+import { ChatHistory } from "@/shared/types/chat";
 import { useEffect, useState } from "react";
 
 const DUMMY_HISTORIES: ChatHistory[] = [
