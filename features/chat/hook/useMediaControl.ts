@@ -8,6 +8,7 @@ const useMediaControl = (type: ChatType) => {
   const mediastreamRef = useRef<MediaStream | null>(null);
   const chunksRef = useRef<Blob[]>([]);
   const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
+  const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [status, setStatus] = useState<RecordStatus>("idle");
   const [permission, setPermission] = useState(true);
 
@@ -25,6 +26,10 @@ const useMediaControl = (type: ChatType) => {
       type: "audio/webm",
     });
     setAudioBlob(mergedBlob);
+    setAudioUrl((prev) => {
+      if (prev) URL.revokeObjectURL(prev);
+      return URL.createObjectURL(mergedBlob);
+    });
     chunksRef.current = [];
   };
 
@@ -74,10 +79,24 @@ const useMediaControl = (type: ChatType) => {
     }
   };
 
+  const reset = () => {
+    setStatus("idle");
+    setAudioBlob(null);
+    setAudioUrl((prev) => {
+      if (prev) URL.revokeObjectURL(prev);
+      return null;
+    });
+    setupMediaRecorder();
+  };
+
   useEffect(() => {
     setupMediaRecorder();
     return () => {
       cleanupMedia();
+      setAudioUrl((prev) => {
+        if (prev) URL.revokeObjectURL(prev);
+        return null;
+      });
     };
   }, []);
 
@@ -85,8 +104,10 @@ const useMediaControl = (type: ChatType) => {
     play,
     pause,
     stop,
+    reset,
     status,
     audioBlob,
+    audioUrl,
     permission,
   };
 };
