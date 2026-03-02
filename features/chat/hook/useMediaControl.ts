@@ -3,7 +3,7 @@ import { getMediastream } from "@/shared/utils/media";
 import { useEffect, useRef, useState } from "react";
 
 type RecordStatus = "idle" | "recording" | "paused" | "stopped";
-const useMediaControl = (type: ChatType) => {
+const useMediaControl = (type: ChatType = "record") => {
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const mediastreamRef = useRef<MediaStream | null>(null);
   const chunksRef = useRef<Blob[]>([]);

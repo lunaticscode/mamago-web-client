@@ -1,5 +1,5 @@
 const _isUserMediaSupported = () => {
-  if (typeof window === undefined) return;
+  if (typeof window === "undefined") return;
   if (!navigator.mediaDevices?.getUserMedia) {
     console.error(
       "이 브라우저는 navigator.mediaDevices.getUserMedia()를 지원하지 않습니다.",
@@ -17,7 +17,7 @@ const _isUserMediaSupported = () => {
 };
 
 export const getMediastream = async () => {
-  if (typeof window === undefined) return null;
+  if (typeof window === "undefined") return null;
   const isSupported = _isUserMediaSupported();
   if (!isSupported) return null;
   return await navigator.mediaDevices
