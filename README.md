@@ -1,36 +1,27 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# HW-Translate Web Client
 
-## Getting Started
+음성 녹음 및 번역을 위한 웹 클라이언트 애플리케이션
 
-First, run the development server:
+## 프로젝트 구조
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+```
+app/                    # Next.js App Router (라우팅)
+routes/                 # 라우트 컴포넌트
+features/               # 기능 모듈 (hook, ui)
+  ├── chat/             #   녹음 제어, FFmpeg 변환
+  └── home/             #   홈 진입 버튼
+widgets/                # 레이아웃, 컨테이너
+components/             # 공용 UI 컴포넌트
+shared/                 # 타입, 유틸, 설정
+public/
+  ├── ffmpeg-assets/    # FFmpeg WASM 에셋
+  └── workers/          # FFmpeg Web Worker 소스
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## 주요 기능
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- **음성 녹음** — 마이크 권한 요청 → 녹음(일시정지/재개) → 정지
+- **WebM → MP3 변환** — FFmpeg WASM을 Web Worker에서 실행하여 메인 스레드 블로킹 없이 클라이언트 사이드 변환
+- **오디오 미리듣기 & 다운로드** — 녹음 종료 후, webm -> mp3 변환, 그리고 변환된 MP3 파일 재생 및 다운로드
+- **요약 정리(예정)** - '요약 시작' 버튼 클릭 후 서버(FastAPI-Server)로 MP3 파일 보내서 STT -> LLM을 통해 요약 진행
+- **채팅 히스토리** — 사이드바를 통한 이전 대화 내역 탐색
