@@ -33,3 +33,42 @@ const load = async () => {
 };
 
 load();
+
+self.onmessage = async (event) => {
+  const { type, payload } = event.data;
+  try {
+    if (type === "WEBM_TO_MP3") {
+      if (!ffmpegLoaded) return;
+      const { inputName, inputBytes, bitrateKbps = 192 } = payload;
+      await ffmpeg.writeFile(inputName, new Uint8Array(inputBytes));
+      const outputName = inputName.replace(/\.webm$/i, "") + ".mp3";
+      await ffmpeg.exec([
+        "-i",
+        inputName,
+        "-vn",
+        "-b:a",
+        `${bitrateKbps}k`,
+        outputName,
+      ]);
+      const out = await ffmpeg.readFile(outputName);
+      const buf = out.buffer.slice(
+        out.byteOffset,
+        out.byteOffset + out.byteLength,
+      );
+
+      postMessage(
+        {
+          type: "DONE",
+          payload: { outputName, mp3Bytes: buf, at: Date.now() },
+        },
+        [buf],
+      );
+      return;
+    }
+  } catch (err) {
+    postMessage({
+      type: "ERROR",
+      payload: { message: String(err?.message || err) },
+    });
+  }
+};

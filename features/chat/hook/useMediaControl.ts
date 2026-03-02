@@ -1,6 +1,7 @@
 import { ChatType } from "@/shared/types/chat";
 import { getMediastream } from "@/shared/utils/media";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import useFfmpegWorker from "./useFfmpegWorker";
 
 type RecordStatus = "idle" | "recording" | "paused" | "stopped";
 const useMediaControl = (type: ChatType = "record") => {
@@ -12,8 +13,27 @@ const useMediaControl = (type: ChatType = "record") => {
   const [status, setStatus] = useState<RecordStatus>("idle");
   const [permission, setPermission] = useState(true);
 
-  // type = realtime일 때는,
-  // handleRecorderAvailable에서 서버로 blob 즉시 전송..?
+  const {
+    mp3Url,
+    mp3Blob,
+    convertToMp3,
+    converting,
+    ffmpegReady,
+    error: convertingError,
+  } = useFfmpegWorker();
+
+  const convertToMp3Ref = useRef(convertToMp3);
+  useEffect(() => {
+    convertToMp3Ref.current = convertToMp3;
+  }, [convertToMp3]);
+
+  useEffect(() => {
+    if (mp3Blob && mp3Url) {
+      // console.log(mp3Blob, mp3Url);
+      setAudioBlob(mp3Blob);
+      setAudioUrl(mp3Url);
+    }
+  }, [mp3Blob, mp3Url]);
 
   const handleRecorderAvailable = (e: BlobEvent) => {
     if (e.data.size) {
@@ -25,11 +45,7 @@ const useMediaControl = (type: ChatType = "record") => {
     const mergedBlob = new Blob(chunksRef.current, {
       type: "audio/webm",
     });
-    setAudioBlob(mergedBlob);
-    setAudioUrl((prev) => {
-      if (prev) URL.revokeObjectURL(prev);
-      return URL.createObjectURL(mergedBlob);
-    });
+    convertToMp3Ref.current(mergedBlob);
     chunksRef.current = [];
   };
 
@@ -82,10 +98,7 @@ const useMediaControl = (type: ChatType = "record") => {
   const reset = () => {
     setStatus("idle");
     setAudioBlob(null);
-    setAudioUrl((prev) => {
-      if (prev) URL.revokeObjectURL(prev);
-      return null;
-    });
+    setAudioUrl(null);
     setupMediaRecorder();
   };
 
@@ -93,10 +106,7 @@ const useMediaControl = (type: ChatType = "record") => {
     setupMediaRecorder();
     return () => {
       cleanupMedia();
-      setAudioUrl((prev) => {
-        if (prev) URL.revokeObjectURL(prev);
-        return null;
-      });
+      setAudioUrl(null);
     };
   }, []);
 
@@ -109,6 +119,9 @@ const useMediaControl = (type: ChatType = "record") => {
     audioBlob,
     audioUrl,
     permission,
+    converting,
+    convertingError,
+    ffmpegReady,
   };
 };
 export default useMediaControl;

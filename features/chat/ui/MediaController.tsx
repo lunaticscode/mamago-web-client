@@ -7,17 +7,30 @@ import {
   Mic,
   Languages,
   RotateCcw,
+  Download,
 } from "lucide-react";
 import useMediaControl from "../hook/useMediaControl";
 import { ChatType } from "@/shared/types/chat";
 import { FC, useMemo } from "react";
+import useFfmpegWorker from "../hook/useFfmpegWorker";
 
 interface MediaControllerProps {
   chatType: ChatType;
 }
 const MediaController: FC<MediaControllerProps> = ({ chatType }) => {
-  const { permission, status, play, pause, stop, reset, audioBlob, audioUrl } =
-    useMediaControl(chatType);
+  const {
+    permission,
+    status,
+    play,
+    pause,
+    stop,
+    reset,
+    ffmpegReady,
+    audioBlob,
+    audioUrl,
+    converting,
+    convertingError,
+  } = useMediaControl(chatType);
 
   const [isIdle, isRecording, isPaused, isStopped] = useMemo(
     () => [
@@ -51,10 +64,7 @@ const MediaController: FC<MediaControllerProps> = ({ chatType }) => {
 
   const handleTranslate = () => {
     if (!audioBlob) return;
-    // TODO: audioBlob을 서버로 전송
-    console.log({ audioBlob });
-    const formData = new FormData();
-    formData.append("audio", audioBlob, "recording.webm");
+    // convertToMp3(audioBlob);
   };
 
   if (isStopped && audioUrl) {
@@ -65,22 +75,55 @@ const MediaController: FC<MediaControllerProps> = ({ chatType }) => {
           <div className="px-4 pt-4">
             <audio src={audioUrl} controls className="w-full h-10" />
           </div>
-
+          {converting && (
+            <div className="flex items-center justify-center gap-2 px-4 pt-3">
+              <span className="size-2 rounded-full bg-primary animate-pulse" />
+              <span className="text-xs text-primary font-medium">
+                MP3 변환 중...
+              </span>
+            </div>
+          )}
+          {/* Error */}
+          {convertingError && (
+            <div className="flex items-center justify-center px-4 pt-3">
+              <span className="text-xs text-destructive font-medium">
+                변환 실패: {convertingError}
+              </span>
+            </div>
+          )}
+          {/* Conversion complete */}
+          {audioUrl && (
+            <div className="flex items-center justify-center gap-2 px-4 pt-3">
+              <span className="text-xs text-green-500 font-medium">
+                MP3 변환 완료
+              </span>
+              <a
+                href={audioUrl}
+                download="recording.mp3"
+                className="flex items-center gap-1 text-xs text-green-500 font-medium hover:text-green-400 transition-colors"
+              >
+                <Download size={14} />
+                다운로드
+              </a>
+            </div>
+          )}
           {/* Action buttons */}
           <div className="flex items-center gap-3 px-4 py-4">
             <button
               onClick={reset}
-              className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl border border-border text-sm font-medium text-muted-foreground hover:bg-accent transition-colors"
+              disabled={converting}
+              className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl border border-border text-sm font-medium text-muted-foreground hover:bg-accent transition-colors disabled:opacity-40"
             >
               <RotateCcw size={16} />
               다시 녹음
             </button>
             <button
               onClick={handleTranslate}
-              className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors"
+              disabled={!ffmpegReady || converting}
+              className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors disabled:opacity-40"
             >
               <Languages size={16} />
-              번역 시작
+              {converting ? "변환 중..." : "번역 시작"}
             </button>
           </div>
         </div>
