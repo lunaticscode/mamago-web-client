@@ -3,16 +3,17 @@ import {
   PlayCircle,
   PauseCircle,
   StopCircle,
-  MicOff,
   Mic,
   Languages,
   RotateCcw,
   Download,
 } from "lucide-react";
 import useMediaControl from "../hook/useMediaControl";
+import SummaryResultPanel from "./SummaryResult";
 import { ChatType } from "@/shared/types/chat";
 import { FC, useMemo } from "react";
-import useFfmpegWorker from "../hook/useFfmpegWorker";
+import useSummary from "../hook/useSummary";
+import PermissionDenined from "./PermissionDenined";
 
 interface MediaControllerProps {
   chatType: ChatType;
@@ -24,13 +25,19 @@ const MediaController: FC<MediaControllerProps> = ({ chatType }) => {
     play,
     pause,
     stop,
-    reset,
+    reset: resetMedia,
     ffmpegReady,
     audioBlob,
     audioUrl,
     converting,
     convertingError,
   } = useMediaControl(chatType);
+  const {
+    summarizing,
+    summaryResult,
+    summary,
+    reset: resetSummary,
+  } = useSummary();
 
   const [isIdle, isRecording, isPaused, isStopped] = useMemo(
     () => [
@@ -48,23 +55,16 @@ const MediaController: FC<MediaControllerProps> = ({ chatType }) => {
   );
 
   if (!permission) {
-    return (
-      <div className="fixed bottom-0 left-0 right-0 pb-[env(safe-area-inset-bottom)]">
-        <div className="mx-4 mb-4 bg-destructive/10 backdrop-blur-xl border border-destructive/30 rounded-2xl shadow-lg shadow-black/10">
-          <div className="flex items-center justify-center gap-3 py-4 text-destructive">
-            <MicOff size={20} />
-            <span className="text-sm font-medium">
-              마이크 권한이 필요합니다
-            </span>
-          </div>
-        </div>
-      </div>
-    );
+    return <PermissionDenined />;
   }
 
-  const handleTranslate = () => {
+  const handleClickSummary = async () => {
     if (!audioBlob) return;
-    // convertToMp3(audioBlob);
+    summary(audioBlob);
+  };
+  const handleClickResetRecord = () => {
+    resetMedia();
+    resetSummary();
   };
 
   if (isStopped && audioUrl) {
@@ -110,7 +110,7 @@ const MediaController: FC<MediaControllerProps> = ({ chatType }) => {
           {/* Action buttons */}
           <div className="flex items-center gap-3 px-4 py-4">
             <button
-              onClick={reset}
+              onClick={handleClickResetRecord}
               disabled={converting}
               className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl border border-border text-sm font-medium text-muted-foreground hover:bg-accent transition-colors disabled:opacity-40"
             >
@@ -118,14 +118,23 @@ const MediaController: FC<MediaControllerProps> = ({ chatType }) => {
               다시 녹음
             </button>
             <button
-              onClick={handleTranslate}
-              disabled={!ffmpegReady || converting}
+              onClick={handleClickSummary}
+              disabled={!ffmpegReady || converting || summarizing}
               className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors disabled:opacity-40"
             >
               <Languages size={16} />
-              {converting ? "변환 중..." : "번역 시작"}
+              {summarizing
+                ? "요약 중..."
+                : converting
+                  ? "변환 중..."
+                  : "녹음본 요약"}
             </button>
           </div>
+
+          <SummaryResultPanel
+            summarizing={summarizing}
+            result={summaryResult}
+          />
         </div>
       </div>
     );

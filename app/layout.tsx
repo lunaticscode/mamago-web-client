@@ -30,7 +30,7 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased flex flex-col min-h-dvh`}
       >
         <Main>{children}</Main>
-        <HistorySidebar />
+        {/* <HistorySidebar /> */}
       </body>
     </html>
   );
